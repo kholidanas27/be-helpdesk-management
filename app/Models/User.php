@@ -14,6 +14,17 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
+
+    /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
@@ -24,11 +35,11 @@ class User extends Authenticatable
 
     public function findForPassport($username)
     {
-        return $this->where('login_user_name', $username)->first();
+        return $this->where('name', $username)->first();
     }
 
     public function validateForPassportPasswordGrant($password)
     {
-        return Hash::check($password, $this->password_hash);
+        return Hash::check($password, $this->password);
     }
 }

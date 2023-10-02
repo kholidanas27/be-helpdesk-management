@@ -19,24 +19,27 @@ class AuthController extends BaseController
      */
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required|email',
-            'password' => 'required',
-            'c_password' => 'required|same:password',
-        ]);
+        try {
+            //code...
+            $validator = Validator::make($request->all(), [
+                'name' => 'required',
+                'email' => 'required|email',
+                'password' => 'required',
+                'c_password' => 'required|same:password',
+            ]);
 
-        if ($validator->fails()) {
-            return $this->sendError('Validation Error.', $validator->errors());
+            if ($validator->fails()) {
+                return $this->sendError('Validation Error.', $validator->errors());
+            }
+
+            $input = $request->all();
+            $input['password'] = bcrypt($input['password']);
+            User::create($input);
+
+            return $this->sendResponse(null, 'User register successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), '', $e->getCode());
         }
-
-        $input = $request->all();
-        $input['password'] = bcrypt($input['password']);
-        $user = User::create($input);
-        $success['token'] =  $user->createToken('HelpdeskManagement')->accessToken;
-        $success['name'] =  $user->name;
-
-        return $this->sendResponse($success, 'User register successfully.');
     }
 
     /**
@@ -62,16 +65,13 @@ class AuthController extends BaseController
             if ($httpResponse->isOk()) {
                 $res = $httpResponse->getContent();
                 $res = json_decode($res, true);
-                return $res;
+                return $this->sendResponse($res, 'User login successfully!');
             } else {
-                return response()->json(['message' => 'Unauthorized'], 401);
+                return $this->sendError('Unauthorized', 401);
             }
-            return response($httpResponse, $httpResponse->status());
+            return $this->sendError($httpResponse, $httpResponse->status());
         } catch (Exception $ex) {
-            return response()->json(
-                ['message' => $ex->getMessage()],
-                500
-            );
+            return $this->sendError($ex->getMessage(), $ex->getCode());
         }
     }
 
